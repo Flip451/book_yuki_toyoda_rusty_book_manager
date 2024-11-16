@@ -97,7 +97,7 @@ args = ["fmt", "--all", "${@}"]
 [tasks.clippy]
 extend = "set-env-local"
 command = "cargo"
-args = ["clippy", "--all", "--allow-targets", "${@}"]
+args = ["clippy", "--all", "--all-targets", "${@}"]
 
 [tasks.test]
 extend = "set-env-local"
