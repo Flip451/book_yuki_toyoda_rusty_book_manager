@@ -7,5 +7,5 @@ use crate::model::book::{event::CreateBook, Book, BookId};
 pub trait BookRepository: Send + Sync {
     async fn create(&self, event: CreateBook) -> Result<()>;
     async fn find_all(&self) -> Result<Vec<Book>>;
-    async fn find_by_id(&self, id: BookId) -> Result<Option<Book>>;
+    async fn find_by_id(&self, id: &BookId) -> Result<Option<Book>>;
 }
