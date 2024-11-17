@@ -1,0 +1,21 @@
+[package]
+name = "adapter"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+shared = { workspace = true }
+
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+derive-new = { workspace = true }
+kernel = { workspace = true }
+
+sqlx = { version = "0.8.2", features = [
+    "runtime-tokio",
+    "uuid",
+    "chrono",
+    "macros",
+    "postgres",
+    "migrate",
+] }
