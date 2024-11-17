@@ -12,6 +12,7 @@ dependencies = [
  "kernel",
  "shared",
  "sqlx",
+ "uuid",
 ]
 
 [[package]]
@@ -952,6 +953,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "derive-new",
  "thiserror 2.0.3",
  "uuid",
 ]

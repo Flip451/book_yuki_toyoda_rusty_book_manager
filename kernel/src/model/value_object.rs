@@ -13,7 +13,7 @@ where
 #[macro_export]
 macro_rules! tuple_value_object_without_error {
     ($name:ident, $value:ty) => {
-        #[derive(Debug, Eq, Hash, PartialEq, Clone)]
+        #[derive(Debug, Eq, Hash, PartialEq, Clone, derive_new::new)]
         pub struct $name($value);
 
         impl $crate::model::value_object::ValueObject for $name {

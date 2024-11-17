@@ -4,12 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+kernel = { workspace = true }
 shared = { workspace = true }
 
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 derive-new = { workspace = true }
-kernel = { workspace = true }
+uuid = { workspace = true }
 
 sqlx = { version = "0.8.2", features = [
     "runtime-tokio",
