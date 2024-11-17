@@ -9,8 +9,10 @@ pub struct BookRow {
     pub description: String,
 }
 
-impl From<BookRow> for Book {
-    fn from(
+impl TryFrom<BookRow> for Book {
+    type Error = anyhow::Error;
+
+    fn try_from(
         BookRow {
             book_id,
             title,
@@ -18,13 +20,13 @@ impl From<BookRow> for Book {
             isbn,
             description,
         }: BookRow,
-    ) -> Self {
-        Book::new(
-            BookId::new(book_id),
-            Title::new(title),
-            Author::new(author),
-            Isbn::new(isbn),
-            Description::new(description),
-        )
+    ) -> Result<Self, Self::Error> {
+        Ok(Book::new(
+            BookId::try_from(book_id)?,
+            Title::try_from(title)?,
+            Author::try_from(author)?,
+            Isbn::try_from(isbn)?,
+            Description::try_from(description)?,
+        ))
     }
 }

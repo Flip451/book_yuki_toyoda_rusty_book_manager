@@ -24,6 +24,7 @@ async fn bootstrap() -> Result<()> {
     // ルーティングの設定
     let app = Router::new()
         .merge(api::route::health::build_health_check_routers())
+        .merge(api::route::book::build_book_routers())
         .with_state(registry);
 
     // TCP リスナーの設定

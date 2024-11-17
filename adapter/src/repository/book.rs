@@ -40,7 +40,10 @@ impl BookRepository for BookRepositoryImpl {
         )
         .fetch_all(self.db.inner_ref())
         .await?;
-        Ok(rows.into_iter().map(|row| row.into()).collect())
+        Ok(rows
+            .into_iter()
+            .map(|row| row.try_into())
+            .collect::<Result<Vec<_>>>()?)
     }
 
     async fn find_by_id(&self, book_id: &BookId) -> Result<Option<Book>> {
@@ -60,7 +63,7 @@ impl BookRepository for BookRepositoryImpl {
         )
         .fetch_optional(self.db.inner_ref())
         .await?;
-        Ok(row.map(|row| row.into()))
+        row.map(|row| row.try_into()).transpose()
     }
 }
 
@@ -74,10 +77,10 @@ mod tests {
     async fn test_register_book(pool: sqlx::PgPool) -> Result<()> {
         let repo = BookRepositoryImpl::new(ConnectionPool::new(pool));
         let book = CreateBook::new(
-            Title::new("test title".to_string()),
-            Author::new("test author".to_string()),
-            Isbn::new("test isbn".to_string()),
-            Description::new("test description".to_string()),
+            Title::try_from("test title".to_string())?,
+            Author::try_from("test author".to_string())?,
+            Isbn::try_from("test isbn".to_string())?,
+            Description::try_from("test description".to_string())?,
         );
 
         repo.create(book).await?;
@@ -96,7 +99,7 @@ mod tests {
             author,
             isbn,
             description,
-        } = res.unwrap();
+        } = res.ok_or(anyhow::anyhow!("book not found"))?;
 
         assert_eq!(book_id, &id);
         assert_eq!(title.inner_ref(), "test title");
