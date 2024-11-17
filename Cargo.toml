@@ -16,7 +16,9 @@ async-trait = "0.1.83"
 axum = { version = "0.7.8", features = ["macros"] }
 derive-new = "0.7.0"
 rstest = "0.23.0"
+serde = { version = "1.0.215", features = ["derive"] }
 thiserror = "2.0.3"
+uuid = { version = "1.11.0", features = ["v4", "serde"] }
 
 adapter = { path = "adapter" }
 api = { path = "api" }
