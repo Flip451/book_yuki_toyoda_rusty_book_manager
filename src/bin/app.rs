@@ -21,7 +21,6 @@ async fn bootstrap() -> Result<()> {
     // 依存解決
     let registry = AppRegistry::new(pool);
 
-
     // ルーティングの設定
     let app = Router::new()
         .merge(api::route::health::build_health_check_routers())
