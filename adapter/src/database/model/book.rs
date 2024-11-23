@@ -1,4 +1,4 @@
-use kernel::model::book::{Author, Book, BookId, Description, Isbn, Title};
+use kernel::model::book::{Author, Book, BookError, BookId, Description, Isbn, Title};
 use uuid::Uuid;
 
 pub struct BookRow {
@@ -10,7 +10,7 @@ pub struct BookRow {
 }
 
 impl TryFrom<BookRow> for Book {
-    type Error = anyhow::Error;
+    type Error = BookError;
 
     fn try_from(
         BookRow {

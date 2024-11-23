@@ -6,6 +6,10 @@ edition = "2021"
 [dependencies]
 async-trait = { workspace = true }
 anyhow = { workspace = true }
+derive-getters = { workspace = true }
 derive-new = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true }
+
+[features]
+test-utils = []

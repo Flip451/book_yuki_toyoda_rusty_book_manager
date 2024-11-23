@@ -10,13 +10,9 @@ shared = { workspace = true }
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 derive-new = { workspace = true }
+sqlx = { workspace = true }
+thiserror = { workspace = true }
 uuid = { workspace = true }
 
-sqlx = { version = "0.8.2", features = [
-    "runtime-tokio",
-    "uuid",
-    "chrono",
-    "macros",
-    "postgres",
-    "migrate",
-] }
+[dev-dependencies]
+kernel = { workspace = true, features = ["test-utils"] }

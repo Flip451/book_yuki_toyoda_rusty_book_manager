@@ -6,9 +6,10 @@ edition = "2021"
 [dependencies]
 kernel = { workspace = true }
 registry = { workspace = true }
-
 anyhow = { workspace = true }
 axum = { workspace = true }
+derive-getters = { workspace = true }
 serde = { workspace = true }
+tracing = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true }

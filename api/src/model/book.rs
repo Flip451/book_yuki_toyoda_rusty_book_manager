@@ -1,8 +1,12 @@
 use kernel::model::{
-    book::{event::CreateBook, Author, Book, Description, Isbn, Title},
+    book::{
+        event::CreateBook, Author, AuthorError, Book, Description, DescriptionError, Isbn,
+        IsbnError, Title, TitleError,
+    },
     value_object::ValueObject,
 };
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
@@ -15,7 +19,7 @@ pub struct CreateBookRequest {
 }
 
 impl TryFrom<CreateBookRequest> for CreateBook {
-    type Error = anyhow::Error;
+    type Error = CreateBookRequestError;
 
     fn try_from(request: CreateBookRequest) -> Result<Self, Self::Error> {
         Ok(CreateBook::new(
@@ -25,6 +29,21 @@ impl TryFrom<CreateBookRequest> for CreateBook {
             Description::try_from(request.description)?,
         ))
     }
+}
+
+#[derive(Debug, Error)]
+pub enum CreateBookRequestError {
+    #[error("invalid title: {0}")]
+    InvalidTitle(#[from] TitleError),
+
+    #[error("invalid author: {0}")]
+    InvalidAuthor(#[from] AuthorError),
+
+    #[error("invalid isbn: {0}")]
+    InvalidIsbn(#[from] IsbnError),
+
+    #[error("invalid description: {0}")]
+    InvalidDescription(#[from] DescriptionError),
 }
 
 #[derive(Debug, Serialize)]
@@ -38,15 +57,9 @@ pub struct BookResponse {
 }
 
 impl From<Book> for BookResponse {
-    fn from(
-        Book {
-            book_id,
-            title,
-            author,
-            isbn,
-            description,
-        }: Book,
-    ) -> Self {
+    fn from(book: Book) -> Self {
+        let (book_id, title, author, isbn, description) = book.dissolve();
+
         BookResponse {
             book_id: book_id.into_inner(),
             title: title.into_inner(),

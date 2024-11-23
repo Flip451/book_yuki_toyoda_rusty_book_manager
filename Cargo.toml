@@ -14,10 +14,24 @@ members = ["api", "kernel", "adapter", "shared", "registry"]
 anyhow = "1.0.93"
 async-trait = "0.1.83"
 axum = { version = "0.7.8", features = ["macros"] }
+bcrypt = "0.16.0"
+derive-getters = "0.5.0"
 derive-new = "0.7.0"
+garde = { version = "0.20.0", features = ["derive", "email"] }
+redis = { version = "0.27.5", features = ["tokio-rustls-comp"] }
 rstest = "0.23.0"
 serde = { version = "1.0.215", features = ["derive"] }
+sqlx = { version = "0.8.2", features = [
+    "runtime-tokio",
+    "uuid",
+    "chrono",
+    "macros",
+    "postgres",
+    "migrate",
+] }
+strum = { version = "0.26.3", features = ["derive"] }
 thiserror = "2.0.3"
+tracing = { version = "0.1.40", features = ["log"] }
 uuid = { version = "1.11.0", features = ["v4", "serde"] }
 
 adapter = { path = "adapter" }
@@ -35,8 +49,13 @@ shared = { workspace = true }
 
 anyhow = { workspace = true }
 axum = { workspace = true }
+tracing = { workspace = true }
 
 tokio = { version = "1.41.1", features = ["full"] }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
+tracing-opentelemetry = "0.28.0"
+opentelemetry-jaeger = { version = "0.22.0", features = ["rt-tokio"] }
+tower-http = { version = "0.6.2", features = ["cors", "trace"] }
 
 [dev-dependencies]
 rstest = { workspace = true }

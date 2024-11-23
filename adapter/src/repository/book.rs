@@ -1,7 +1,7 @@
-use anyhow::Result;
 use async_trait::async_trait;
 use derive_new::new;
 use kernel::model::value_object::ValueObject;
+use kernel::repository::book::{BookRepositoryError, BookRepositoryResult};
 use kernel::{
     model::book::{event::CreateBook, Book, BookId},
     repository::book::BookRepository,
@@ -17,7 +17,7 @@ pub struct BookRepositoryImpl {
 
 #[async_trait]
 impl BookRepository for BookRepositoryImpl {
-    async fn create(&self, event: CreateBook) -> Result<()> {
+    async fn create(&self, event: CreateBook) -> BookRepositoryResult<()> {
         sqlx::query!(
             r#"
             INSERT INTO books (title, author, isbn, description)
@@ -29,24 +29,27 @@ impl BookRepository for BookRepositoryImpl {
             event.description.inner_ref(),
         )
         .execute(self.db.inner_ref())
-        .await?;
+        .await
+        .map_err(|e| BookRepositoryError::Unexpected(Box::new(e)))?;
         Ok(())
     }
 
-    async fn find_all(&self) -> Result<Vec<Book>> {
+    async fn find_all(&self) -> BookRepositoryResult<Vec<Book>> {
         let rows = sqlx::query_as!(
             BookRow,
             r#"SELECT book_id, title, author, isbn, description FROM books ORDER BY created_at DESC"#
         )
         .fetch_all(self.db.inner_ref())
-        .await?;
-        Ok(rows
-            .into_iter()
-            .map(|row| row.try_into())
-            .collect::<Result<Vec<_>>>()?)
+        .await
+        .map_err(|e| BookRepositoryError::Unexpected(Box::new(e)))?;
+
+        rows.into_iter()
+            .map(|row: BookRow| row.try_into())
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(BookRepositoryError::from)
     }
 
-    async fn find_by_id(&self, book_id: &BookId) -> Result<Option<Book>> {
+    async fn find_by_id(&self, book_id: &BookId) -> BookRepositoryResult<Option<Book>> {
         let row = sqlx::query_as!(
             BookRow,
             r#"
@@ -62,13 +65,18 @@ impl BookRepository for BookRepositoryImpl {
             book_id.inner_ref(),
         )
         .fetch_optional(self.db.inner_ref())
-        .await?;
-        row.map(|row| row.try_into()).transpose()
+        .await
+        .map_err(|e| BookRepositoryError::Unexpected(Box::new(e)))?;
+
+        row.map(|row| row.try_into())
+            .transpose()
+            .map_err(BookRepositoryError::from)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use anyhow::Result;
     use kernel::model::book::{Author, Description, Isbn, Title};
 
     use super::*;
@@ -101,7 +109,7 @@ mod tests {
             description,
         } = res.ok_or(anyhow::anyhow!("book not found"))?;
 
-        assert_eq!(book_id, &id);
+        assert_eq!(book_id.inner_ref(), id.inner_ref());
         assert_eq!(title.inner_ref(), "test title");
         assert_eq!(author.inner_ref(), "test author");
         assert_eq!(isbn.inner_ref(), "test isbn");
