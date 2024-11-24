@@ -17,6 +17,7 @@ axum = { version = "0.7.8", features = ["macros"] }
 bcrypt = "0.16.0"
 derive-getters = "0.5.0"
 derive-new = "0.7.0"
+email_address = "0.2.9"
 garde = { version = "0.20.0", features = ["derive", "email"] }
 redis = { version = "0.27.5", features = ["tokio-rustls-comp"] }
 rstest = "0.23.0"

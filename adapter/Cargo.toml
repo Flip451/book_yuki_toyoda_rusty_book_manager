@@ -9,7 +9,9 @@ shared = { workspace = true }
 
 anyhow = { workspace = true }
 async-trait = { workspace = true }
+bcrypt = { workspace = true }
 derive-new = { workspace = true }
+redis = { workspace = true }
 sqlx = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true }

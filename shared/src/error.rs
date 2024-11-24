@@ -33,20 +33,20 @@ pub enum AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
+        use AppError::*;
+
         let status_code = match self {
-            AppError::UnprocessableEntity(_) => StatusCode::UNPROCESSABLE_ENTITY,
-            AppError::EntityNotFound(_) => StatusCode::NOT_FOUND,
-            AppError::ValidationError(_) | AppError::ConvertToUuidError(_) => {
-                StatusCode::BAD_REQUEST
-            }
-            AppError::UnauthenticatedError | AppError::ForbiddenOperation => StatusCode::FORBIDDEN,
-            AppError::UnauthorizedError => StatusCode::UNAUTHORIZED,
-            e @ (AppError::TransactionError(_)
-            | AppError::SpecificOperationError(_)
-            | AppError::NoRowsAffectedError(_)
-            | AppError::KeyValueStoreError(_)
-            | AppError::BcryptError(_)
-            | AppError::ConversionEntityError(_)) => {
+            UnprocessableEntity(_) => StatusCode::UNPROCESSABLE_ENTITY,
+            EntityNotFound(_) => StatusCode::NOT_FOUND,
+            ValidationError(_) | ConvertToUuidError(_) => StatusCode::BAD_REQUEST,
+            UnauthenticatedError | ForbiddenOperation => StatusCode::FORBIDDEN,
+            UnauthorizedError => StatusCode::UNAUTHORIZED,
+            e @ (TransactionError(_)
+            | SpecificOperationError(_)
+            | NoRowsAffectedError(_)
+            | KeyValueStoreError(_)
+            | BcryptError(_)
+            | ConversionEntityError(_)) => {
                 tracing::error!(
                     error.cause_chain = ?e,
                     error.message = %e,

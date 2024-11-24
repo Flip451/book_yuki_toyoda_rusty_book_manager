@@ -5,13 +5,13 @@ use uuid::Uuid;
 pub mod event;
 
 use crate::impl_entity;
-use crate::tuple_value_object_without_error;
+use crate::tuple_value_object_with_simple_error;
 
-tuple_value_object_without_error!(BookId, Uuid, BookIdError);
-tuple_value_object_without_error!(Title, String, TitleError);
-tuple_value_object_without_error!(Author, String, AuthorError);
-tuple_value_object_without_error!(Isbn, String, IsbnError);
-tuple_value_object_without_error!(Description, String, DescriptionError);
+tuple_value_object_with_simple_error!(BookId, Uuid, BookIdError);
+tuple_value_object_with_simple_error!(Title, String, TitleError);
+tuple_value_object_with_simple_error!(Author, String, AuthorError);
+tuple_value_object_with_simple_error!(Isbn, String, IsbnError);
+tuple_value_object_with_simple_error!(Description, String, DescriptionError);
 
 #[cfg(not(feature = "test-utils"))]
 #[derive(Debug, derive_new::new, Dissolve)]
