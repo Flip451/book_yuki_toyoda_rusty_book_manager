@@ -1,8 +1,11 @@
-use adapter::database::connect_database_with;
+use adapter::{database::connect_database_with, redis::RedisClient};
 use axum::Router;
 use registry::AppRegistry;
 use shared::{config::AppConfig, env::Environment};
-use std::net::{Ipv4Addr, SocketAddr};
+use std::{
+    net::{Ipv4Addr, SocketAddr},
+    sync::Arc,
+};
 use tower_http::{
     trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     LatencyUnit,
@@ -26,13 +29,17 @@ async fn bootstrap() -> Result<()> {
     // データベースの接続
     let pool = connect_database_with(&app_config.database);
 
+    // Redis への接続を担うクライアントのインスタンス化
+    let kvs = Arc::new(RedisClient::new(&app_config.redis)?);
+
     // 依存解決
-    let registry = AppRegistry::new(pool);
+    let registry = AppRegistry::new(pool, kvs, app_config);
 
     // ルーティングの設定
     let app = Router::new()
         .merge(api::route::health::build_health_check_routers())
         .merge(api::route::book::build_book_routers())
+        .merge(api::route::auth::build_auth_routers())
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))

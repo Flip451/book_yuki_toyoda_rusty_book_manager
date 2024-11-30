@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use derive_new::new;
 use kernel::{
     model::{
         auth::{event::CreateToken, AccessToken},
@@ -18,6 +19,7 @@ use crate::{
     redis::RedisClient,
 };
 
+#[derive(new)]
 pub struct AuthRepositoryImpl {
     db: ConnectionPool,
     kvs: Arc<RedisClient>,
