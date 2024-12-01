@@ -3,7 +3,7 @@ use thiserror::Error;
 
 use crate::model::{
     auth::{event::CreateToken, AccessToken, AccessTokenError},
-    user::{Email, Password, UserId, UserIdError},
+    user::{Password, UserEmail, UserId, UserIdError},
 };
 
 #[async_trait]
@@ -13,8 +13,11 @@ pub trait AuthRepository: Send + Sync {
         access_token: &AccessToken,
     ) -> AuthRepositoryResult<Option<UserId>>;
 
-    async fn verify_user(&self, email: &Email, password: &Password)
-        -> AuthRepositoryResult<UserId>;
+    async fn verify_user(
+        &self,
+        email: &UserEmail,
+        password: &Password,
+    ) -> AuthRepositoryResult<UserId>;
 
     async fn create_token(&self, event: CreateToken) -> AuthRepositoryResult<AccessToken>;
 

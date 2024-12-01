@@ -8,6 +8,7 @@ kernel = { workspace = true }
 registry = { workspace = true }
 anyhow = { workspace = true }
 axum = { workspace = true }
+axum-extra = { workspace = true }
 derive-getters = { workspace = true }
 serde = { workspace = true }
 tracing = { workspace = true }

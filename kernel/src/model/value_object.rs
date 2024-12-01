@@ -85,6 +85,48 @@ macro_rules! tuple_value_object_requiring_error_definition {
 }
 
 #[macro_export]
+macro_rules! enum_value_object_with_simple_error {
+    (
+        $(#[$derive:meta])?
+        $name:ident
+        {
+            $(
+                $(#[$meta_for_each_variant:meta])*
+                $variant:ident,
+            )+
+        },
+        $error:ident
+    ) => {
+        $(#[$derive])?
+        #[derive(Debug, Eq, Hash, PartialEq, Clone)]
+        pub enum $name {
+            $(
+                $(#[$meta_for_each_variant])*
+                $variant,
+            )+
+        }
+
+        impl $crate::model::value_object::ValueObject for $name {
+            type Value = Self;
+            type Error = $error;
+
+            fn inner_ref(&self) -> &Self::Value {
+                &self
+            }
+
+            fn into_inner(self) -> Self::Value {
+                self
+            }
+        }
+
+        #[derive(Debug, thiserror::Error)]
+        pub enum $error {}
+
+        impl $crate::model::value_object::ValueObjectError for $error {}
+    };
+}
+
+#[macro_export]
 macro_rules! define_id_with_uuid {
     ($name:ident, $error:ident) => {
         tuple_value_object_with_simple_error!($name, uuid::Uuid, $error);

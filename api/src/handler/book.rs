@@ -70,7 +70,11 @@ impl IntoResponse for BookHandlerError {
         let status_code = match self {
             BookHandlerError::NotFound => StatusCode::NOT_FOUND,
             e @ BookHandlerError::RepositoryError(_) => {
-                tracing::error!(error.cause_chain = ?e, error = %e, "invalid entity");
+                tracing::error!(
+                    error.cause_chain = ?e,
+                    error.message = %e,
+                    "unexpected error happened"
+                );
                 StatusCode::INTERNAL_SERVER_ERROR
             }
             BookHandlerError::InvalidCreateBookRequest(_) => StatusCode::BAD_REQUEST,

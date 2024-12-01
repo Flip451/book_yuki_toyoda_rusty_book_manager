@@ -1,4 +1,4 @@
-use kernel::model::book::{Author, Book, BookError, BookId, Description, Isbn, Title};
+use kernel::model::book::{Book, BookError};
 use uuid::Uuid;
 
 pub struct BookRow {
@@ -8,6 +8,8 @@ pub struct BookRow {
     pub isbn: String,
     pub description: String,
 }
+
+// TODO: Add BookRowError
 
 impl TryFrom<BookRow> for Book {
     type Error = BookError;
@@ -22,11 +24,11 @@ impl TryFrom<BookRow> for Book {
         }: BookRow,
     ) -> Result<Self, Self::Error> {
         Ok(Book::new(
-            BookId::try_from(book_id)?,
-            Title::try_from(title)?,
-            Author::try_from(author)?,
-            Isbn::try_from(isbn)?,
-            Description::try_from(description)?,
+            book_id.try_into()?,
+            title.try_into()?,
+            author.try_into()?,
+            isbn.try_into()?,
+            description.try_into()?,
         ))
     }
 }

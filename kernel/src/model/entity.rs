@@ -1,8 +1,6 @@
-pub use anyhow::Result;
-
-pub trait Entity
+pub trait Entity: Eq
 where
-    Self::Identity: PartialEq,
+    Self::Identity: Eq,
 {
     type Identity;
 
@@ -12,6 +10,7 @@ where
     }
 }
 
+// TODO: identity_field で複数のフィールドを指定できるようにする
 #[macro_export]
 macro_rules! impl_entity {
     ($target:ty, $identity_field:ident, $identity_type:ty) => {
@@ -22,5 +21,13 @@ macro_rules! impl_entity {
                 &self.$identity_field
             }
         }
+
+        impl PartialEq for $target {
+            fn eq(&self, other: &Self) -> bool {
+                <$target as $crate::model::entity::Entity>::eq(self, other)
+            }
+        }
+
+        impl Eq for $target {}
     };
 }

@@ -5,7 +5,7 @@ use derive_new::new;
 use kernel::{
     model::{
         auth::{event::CreateToken, AccessToken},
-        user::{Email, Password, UserId},
+        user::{Password, UserEmail, UserId},
         value_object::ValueObject,
     },
     repository::auth::{AuthRepository, AuthRepositoryError, AuthRepositoryResult},
@@ -42,7 +42,7 @@ impl AuthRepository for AuthRepositoryImpl {
 
     async fn verify_user(
         &self,
-        email: &Email,
+        email: &UserEmail,
         password: &Password,
     ) -> AuthRepositoryResult<UserId> {
         let user_row = sqlx::query_as!(
