@@ -1,4 +1,6 @@
-use kernel::model::book::{AuthorError, Book, BookIdError, DescriptionError, IsbnError, TitleError};
+use kernel::model::book::{
+    AuthorError, Book, BookIdError, DescriptionError, IsbnError, TitleError,
+};
 use thiserror::Error;
 use uuid::Uuid;
 

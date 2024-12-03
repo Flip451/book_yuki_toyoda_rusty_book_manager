@@ -15,7 +15,7 @@ pub struct UpdateUserRole {
 
 #[derive(Debug)]
 pub struct UpdateUserPassword {
-    pub email: UserEmail,
+    pub user_id: UserId,
     pub current_password: Password,
     pub new_password: Password,
 }

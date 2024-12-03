@@ -1,5 +1,7 @@
 pub mod event;
 
+use std::fmt::Display;
+
 use derive_getters::Getters;
 use thiserror::Error;
 
@@ -38,6 +40,12 @@ impl std::str::FromStr for UserEmail {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Self(email_address::EmailAddress::from_str(s)?))
+    }
+}
+
+impl Display for UserEmail {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 

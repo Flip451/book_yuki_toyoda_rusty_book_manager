@@ -23,6 +23,21 @@ pub enum UserRepositoryError {
 
     #[error("unexpected error occurred")]
     Unexpected(#[source] Box<dyn std::error::Error + Send + Sync>),
+
+    #[error("not found")]
+    NotFound,
+
+    #[error("no resource was affected")]
+    NoResourceAffected,
+
+    #[error("transaction error")]
+    Transaction(#[source] Box<dyn std::error::Error + Send + Sync>),
+
+    #[error("invalid password")]
+    InvalidPassword,
+
+    #[error("password hash error")]
+    PasswordHash(#[source] Box<dyn std::error::Error + Send + Sync>),
 }
 
 pub type UserRepositoryResult<T> = Result<T, UserRepositoryError>;

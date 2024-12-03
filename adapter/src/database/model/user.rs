@@ -1,6 +1,8 @@
-use kernel::model::user::{User, UserEmail, UserEmailError, UserIdError, UserNameError, UserRole};
+use kernel::model::user::{
+    User, UserEmail, UserEmailError, UserId, UserIdError, UserNameError, UserRole,
+};
 use sqlx::types::chrono::{DateTime, Utc};
-use strum::EnumString;
+use strum::{Display, EnumString};
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -13,10 +15,40 @@ pub struct UserRow {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, EnumString)]
+pub struct UserIdRow {
+    pub user_id: Uuid,
+}
+
+impl TryFrom<UserIdRow> for UserId {
+    type Error = UserIdError;
+
+    fn try_from(row: UserIdRow) -> Result<Self, Self::Error> {
+        row.user_id.try_into().map_err(UserIdError::from)
+    }
+}
+
+#[derive(Debug, EnumString, Display)]
 pub enum UserRoleName {
     Admin,
     User,
+}
+
+impl From<UserRoleName> for UserRole {
+    fn from(value: UserRoleName) -> Self {
+        match value {
+            UserRoleName::Admin => UserRole::Admin,
+            UserRoleName::User => UserRole::User,
+        }
+    }
+}
+
+impl From<UserRole> for UserRoleName {
+    fn from(value: UserRole) -> Self {
+        match value {
+            UserRole::Admin => UserRoleName::Admin,
+            UserRole::User => UserRoleName::User,
+        }
+    }
 }
 
 #[derive(Debug, Error)]
@@ -48,15 +80,10 @@ impl TryFrom<UserRow> for User {
     ) -> Result<Self, Self::Error> {
         let user_role = user_role_name.parse::<UserRoleName>()?;
 
-        let user_role = match user_role {
-            UserRoleName::Admin => UserRole::Admin,
-            UserRoleName::User => UserRole::User,
-        };
-
         Ok(User::new(
             user_id.try_into()?,
             user_name.try_into()?,
-            user_role,
+            user_role.into(),
             user_email.parse::<UserEmail>()?,
         ))
     }
