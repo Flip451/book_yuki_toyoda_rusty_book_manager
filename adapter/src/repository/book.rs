@@ -7,7 +7,7 @@ use kernel::{
     repository::book::BookRepository,
 };
 
-use crate::database::model::book::BookRow;
+use crate::database::model::book::{BookRow, BookRowError};
 use crate::database::ConnectionPool;
 
 #[derive(new)]
@@ -46,7 +46,7 @@ impl BookRepository for BookRepositoryImpl {
         rows.into_iter()
             .map(|row: BookRow| row.try_into())
             .collect::<Result<Vec<_>, _>>()
-            .map_err(BookRepositoryError::from)
+            .map_err(|e: BookRowError| BookRepositoryError::InvalidSavedEntity(e.into()))
     }
 
     async fn find_by_id(&self, book_id: &BookId) -> BookRepositoryResult<Option<Book>> {
@@ -70,7 +70,7 @@ impl BookRepository for BookRepositoryImpl {
 
         row.map(|row| row.try_into())
             .transpose()
-            .map_err(BookRepositoryError::from)
+            .map_err(|e: BookRowError| BookRepositoryError::InvalidSavedEntity(e.into()))
     }
 }
 

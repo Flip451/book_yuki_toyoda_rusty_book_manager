@@ -1,4 +1,5 @@
-use kernel::model::book::{Book, BookError};
+use kernel::model::book::{AuthorError, Book, BookIdError, DescriptionError, IsbnError, TitleError};
+use thiserror::Error;
 use uuid::Uuid;
 
 pub struct BookRow {
@@ -9,10 +10,26 @@ pub struct BookRow {
     pub description: String,
 }
 
-// TODO: Add BookRowError
+#[derive(Debug, Error)]
+pub enum BookRowError {
+    #[error("saved book id is invalid: {0}")]
+    InvalidBookId(#[from] BookIdError),
+
+    #[error("saved book title is invalid: {0}")]
+    InvalidBookTitle(#[from] TitleError),
+
+    #[error("saved book author is invalid: {0}")]
+    InvalidBookAuthor(#[from] AuthorError),
+
+    #[error("saved book isbn is invalid: {0}")]
+    InvalidBookIsbn(#[from] IsbnError),
+
+    #[error("saved book description is invalid: {0}")]
+    InvalidBookDescription(#[from] DescriptionError),
+}
 
 impl TryFrom<BookRow> for Book {
-    type Error = BookError;
+    type Error = BookRowError;
 
     fn try_from(
         BookRow {
