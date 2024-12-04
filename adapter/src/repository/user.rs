@@ -12,7 +12,7 @@ use kernel::{
 };
 
 use crate::database::{
-    model::user::{UserIdRow, UserRoleName, UserRow},
+    model::user::{UserRoleName, UserRow},
     ConnectionPool,
 };
 
@@ -82,8 +82,7 @@ impl UserRepository for UserRepositoryImpl {
         let hashed_password = hash_password(&event.password)
             .map_err(|e| UserRepositoryError::PasswordHash(e.into()))?;
 
-        let user_id = sqlx::query_as!(
-            UserIdRow,
+        let user_id = sqlx::query_scalar!(
             r#"
                 INSERT INTO users (name, email, password_hash, role_id)
                 SELECT $1, $2, $3, r.role_id

@@ -30,6 +30,6 @@ pub fn connect_database_with(config: &DatabaseConfig) -> ConnectionPool {
 
 impl ConnectionPool {
     pub async fn begin(&self) -> Result<sqlx::Transaction<'_, sqlx::Postgres>, sqlx::Error> {
-        self.0.begin().await.map_err(|e| e.into())
+        self.0.begin().await
     }
 }

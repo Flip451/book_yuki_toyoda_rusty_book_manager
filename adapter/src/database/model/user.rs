@@ -1,6 +1,4 @@
-use kernel::model::user::{
-    User, UserEmail, UserEmailError, UserId, UserIdError, UserNameError, UserRole,
-};
+use kernel::model::user::{User, UserEmail, UserEmailError, UserIdError, UserNameError, UserRole};
 use sqlx::types::chrono::{DateTime, Utc};
 use strum::{Display, EnumString};
 use thiserror::Error;
@@ -13,18 +11,6 @@ pub struct UserRow {
     pub user_email: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-}
-
-pub struct UserIdRow {
-    pub user_id: Uuid,
-}
-
-impl TryFrom<UserIdRow> for UserId {
-    type Error = UserIdError;
-
-    fn try_from(row: UserIdRow) -> Result<Self, Self::Error> {
-        row.user_id.try_into().map_err(UserIdError::from)
-    }
 }
 
 #[derive(Debug, EnumString, Display)]
