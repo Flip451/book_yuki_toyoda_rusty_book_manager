@@ -31,6 +31,10 @@ impl AuthorizedUser {
     pub fn is_admin(&self) -> bool {
         self.user.role() == &UserRole::Admin
     }
+
+    pub fn user(self) -> User {
+        self.user
+    }
 }
 
 #[async_trait]

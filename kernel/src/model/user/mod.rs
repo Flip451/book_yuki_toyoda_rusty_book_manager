@@ -2,6 +2,7 @@ pub mod event;
 
 use std::fmt::Display;
 
+use derive_getters::Dissolve;
 use derive_getters::Getters;
 use thiserror::Error;
 
@@ -49,7 +50,7 @@ impl Display for UserEmail {
     }
 }
 
-#[derive(Getters, Debug, Clone, derive_new::new)]
+#[derive(Getters, Debug, Clone, derive_new::new, Dissolve)]
 pub struct User {
     user_id: UserId,
     user_name: UserName,

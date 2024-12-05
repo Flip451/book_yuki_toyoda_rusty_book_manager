@@ -37,8 +37,7 @@ async fn bootstrap() -> Result<()> {
 
     // ルーティングの設定
     let app = Router::new()
-        .merge(api::route::health::build_health_check_routers())
-        .merge(api::route::book::build_book_routers())
+        .merge(api::route::v1::routes())
         .merge(api::route::auth::build_auth_routers())
         .layer(
             TraceLayer::new_for_http()
