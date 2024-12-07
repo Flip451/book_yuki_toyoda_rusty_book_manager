@@ -1,5 +1,8 @@
 use axum::{
-    extract::{Path, State}, http::StatusCode, response::IntoResponse, Json
+    extract::{Path, State},
+    http::StatusCode,
+    response::IntoResponse,
+    Json,
 };
 use garde::Validate;
 use kernel::{

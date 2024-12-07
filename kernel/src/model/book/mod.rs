@@ -7,6 +7,8 @@ pub mod event;
 use crate::impl_entity;
 use crate::tuple_value_object_with_simple_error;
 
+use super::user::BookOwner;
+
 tuple_value_object_with_simple_error!(BookId, Uuid, BookIdError);
 tuple_value_object_with_simple_error!(Title, String, TitleError);
 tuple_value_object_with_simple_error!(Author, String, AuthorError);
@@ -21,6 +23,7 @@ pub struct Book {
     author: Author,
     isbn: Isbn,
     description: Description,
+    owner: BookOwner,
 }
 
 #[cfg(feature = "test-utils")]
@@ -31,6 +34,7 @@ pub struct Book {
     pub author: Author,
     pub isbn: Isbn,
     pub description: Description,
+    pub owner: BookOwner,
 }
 
 impl_entity!(Book, book_id, BookId);
@@ -51,4 +55,9 @@ pub enum BookError {
 
     #[error("invalid description: {0}")]
     InvalidDescription(#[from] DescriptionError),
+}
+
+pub struct BookListOptions {
+    pub limit: i64,
+    pub offset: i64,
 }

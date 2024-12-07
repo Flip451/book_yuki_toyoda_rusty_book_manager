@@ -1,5 +1,6 @@
-use kernel::model::book::{
-    AuthorError, Book, BookIdError, DescriptionError, IsbnError, TitleError,
+use kernel::model::{
+    book::{AuthorError, Book, BookIdError, DescriptionError, IsbnError, TitleError},
+    user::{BookOwner, UserIdError, UserNameError},
 };
 use thiserror::Error;
 use uuid::Uuid;
@@ -10,6 +11,8 @@ pub struct BookRow {
     pub author: String,
     pub isbn: String,
     pub description: String,
+    pub owner_id: Uuid,
+    pub owner_name: String,
 }
 
 #[derive(Debug, Error)]
@@ -28,6 +31,12 @@ pub enum BookRowError {
 
     #[error("saved book description is invalid: {0}")]
     InvalidBookDescription(#[from] DescriptionError),
+
+    #[error("saved book owner id is invalid: {0}")]
+    InvalidBookOwnerId(#[from] UserIdError),
+
+    #[error("saved book owner name is invalid: {0}")]
+    InvalidBookOwnerName(#[from] UserNameError),
 }
 
 impl TryFrom<BookRow> for Book {
@@ -40,14 +49,27 @@ impl TryFrom<BookRow> for Book {
             author,
             isbn,
             description,
+            owner_id,
+            owner_name,
         }: BookRow,
     ) -> Result<Self, Self::Error> {
+        let book_owner = BookOwner {
+            user_id: owner_id.try_into()?,
+            user_name: owner_name.try_into()?,
+        };
+
         Ok(Book::new(
             book_id.try_into()?,
             title.try_into()?,
             author.try_into()?,
             isbn.try_into()?,
             description.try_into()?,
+            book_owner,
         ))
     }
+}
+
+pub struct PagenatedBookRow {
+    pub total: i64,
+    pub book_id: Uuid,
 }

@@ -18,10 +18,10 @@ pub trait UserRepository: Send + Sync {
 
 #[derive(Debug, Error)]
 pub enum UserRepositoryError {
-    #[error("saved entity is invalid")]
+    #[error("saved entity is invalid: {0}")]
     InvalidSavedEntity(#[source] Box<dyn std::error::Error + Send + Sync>),
 
-    #[error("unexpected error occurred")]
+    #[error("unexpected error occurred: {0}")]
     Unexpected(#[source] Box<dyn std::error::Error + Send + Sync>),
 
     #[error("not found")]
@@ -30,13 +30,13 @@ pub enum UserRepositoryError {
     #[error("no resource was affected")]
     NoResourceAffected,
 
-    #[error("transaction error")]
+    #[error("transaction error: {0}")]
     Transaction(#[source] Box<dyn std::error::Error + Send + Sync>),
 
     #[error("invalid password")]
     InvalidPassword,
 
-    #[error("password hash error")]
+    #[error("password hash error: {0}")]
     PasswordHash(#[source] Box<dyn std::error::Error + Send + Sync>),
 }
 

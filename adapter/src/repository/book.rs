@@ -1,5 +1,9 @@
 use async_trait::async_trait;
 use derive_new::new;
+use kernel::model::book::event::{DeleteBook, UpdateBook};
+use kernel::model::book::BookListOptions;
+use kernel::model::list::PaginatedList;
+use kernel::model::user::UserId;
 use kernel::model::value_object::ValueObject;
 use kernel::repository::book::{BookRepositoryError, BookRepositoryResult};
 use kernel::{
@@ -7,7 +11,7 @@ use kernel::{
     repository::book::BookRepository,
 };
 
-use crate::database::model::book::{BookRow, BookRowError};
+use crate::database::model::book::{BookRow, BookRowError, PagenatedBookRow};
 use crate::database::ConnectionPool;
 
 #[derive(new)]
@@ -17,16 +21,17 @@ pub struct BookRepositoryImpl {
 
 #[async_trait]
 impl BookRepository for BookRepositoryImpl {
-    async fn create(&self, event: CreateBook) -> BookRepositoryResult<()> {
+    async fn create(&self, event: CreateBook, owner_id: UserId) -> BookRepositoryResult<()> {
         sqlx::query!(
             r#"
-            INSERT INTO books (title, author, isbn, description)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO books (title, author, isbn, description, user_id)
+            VALUES ($1, $2, $3, $4, $5)
             "#,
             event.title.inner_ref(),
             event.author.inner_ref(),
             event.isbn.inner_ref(),
             event.description.inner_ref(),
+            owner_id.inner_ref(),
         )
         .execute(self.db.inner_ref())
         .await
@@ -34,19 +39,67 @@ impl BookRepository for BookRepositoryImpl {
         Ok(())
     }
 
-    async fn find_all(&self) -> BookRepositoryResult<Vec<Book>> {
+    async fn find_all(
+        &self,
+        options: BookListOptions,
+    ) -> BookRepositoryResult<PaginatedList<Book>> {
+        let BookListOptions { limit, offset } = options;
+
         let rows = sqlx::query_as!(
-            BookRow,
-            r#"SELECT book_id, title, author, isbn, description FROM books ORDER BY created_at DESC"#
+            PagenatedBookRow,
+            r#"
+                SELECT
+                    COUNT(*) OVER() AS "total!",
+                    book_id
+                FROM books
+                ORDER BY created_at DESC
+                LIMIT $1 OFFSET $2
+            "#,
+            limit,
+            offset,
         )
         .fetch_all(self.db.inner_ref())
         .await
         .map_err(|e| BookRepositoryError::Unexpected(Box::new(e)))?;
 
-        rows.into_iter()
-            .map(|row: BookRow| row.try_into())
+        let total = rows.first().map(|r| r.total).unwrap_or_default(); // レコードが一つもないときは total は 0 にする
+
+        let book_ids = rows.into_iter().map(|r| r.book_id).collect::<Vec<_>>();
+
+        let rows = sqlx::query_as!(
+            BookRow,
+            r#"
+                SELECT
+                    b.book_id,
+                    b.title,
+                    b.author,
+                    b.isbn,
+                    b.description,
+                    u.user_id AS owner_id,
+                    u.name AS owner_name
+                FROM books b
+                INNER JOIN users u USING(user_id)
+                WHERE b.book_id IN (SELECT * FROM UNNEST($1::uuid[]))
+                ORDER BY b.created_at DESC
+            "#,
+            &book_ids,
+        )
+        .fetch_all(self.db.inner_ref())
+        .await
+        .map_err(|e| BookRepositoryError::Unexpected(e.into()))?;
+
+        let items = rows
+            .into_iter()
+            .map(Book::try_from)
             .collect::<Result<Vec<_>, _>>()
-            .map_err(|e: BookRowError| BookRepositoryError::InvalidSavedEntity(e.into()))
+            .map_err(|e: BookRowError| BookRepositoryError::InvalidSavedEntity(e.into()))?;
+
+        Ok(PaginatedList {
+            total,
+            limit,
+            offset,
+            items,
+        })
     }
 
     async fn find_by_id(&self, book_id: &BookId) -> BookRepositoryResult<Option<Book>> {
@@ -54,13 +107,16 @@ impl BookRepository for BookRepositoryImpl {
             BookRow,
             r#"
                 SELECT
-                    book_id,
-                    title,
-                    author,
-                    isbn,
-                    description
-                FROM books
-                WHERE book_id = $1
+                    b.book_id,
+                    b.title,
+                    b.author,
+                    b.isbn,
+                    b.description,
+                    u.user_id AS owner_id,
+                    u.name AS owner_name
+                FROM books b
+                INNER JOIN users u USING(user_id)
+                WHERE b.book_id = $1
             "#,
             book_id.inner_ref(),
         )
@@ -72,33 +128,115 @@ impl BookRepository for BookRepositoryImpl {
             .transpose()
             .map_err(|e: BookRowError| BookRepositoryError::InvalidSavedEntity(e.into()))
     }
+
+    async fn update(&self, event: UpdateBook) -> BookRepositoryResult<()> {
+        let res = sqlx::query!(
+            r#"
+                UPDATE books
+                SET
+                    title = $1,
+                    author = $2,
+                    isbn = $3,
+                    description = $4
+                WHERE book_id = $5
+                AND user_id = $6
+            "#,
+            event.title.inner_ref(),
+            event.author.inner_ref(),
+            event.isbn.inner_ref(),
+            event.description.inner_ref(),
+            event.book_id.inner_ref(),
+            event.requested_by.inner_ref(),
+        )
+        .execute(self.db.inner_ref())
+        .await
+        .map_err(|e| BookRepositoryError::Unexpected(Box::new(e)))?;
+
+        if res.rows_affected() < 1 {
+            return Err(BookRepositoryError::NotFound);
+        }
+
+        Ok(())
+    }
+
+    async fn delete(&self, event: DeleteBook) -> BookRepositoryResult<()> {
+        let res = sqlx::query!(
+            r#"
+                DELETE FROM books WHERE book_id = $1 AND user_id = $2
+            "#,
+            event.book_id.inner_ref(),
+            event.requested_by.inner_ref(),
+        )
+        .execute(self.db.inner_ref())
+        .await
+        .map_err(|e| BookRepositoryError::Unexpected(Box::new(e)))?;
+
+        if res.rows_affected() < 1 {
+            return Err(BookRepositoryError::NotFound);
+        }
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
-    use kernel::model::book::{Author, Description, Isbn, Title};
+    use kernel::{
+        model::{
+            book::{Author, Description, Isbn, Title},
+            user::{event::CreateUser, Password, UserEmail, UserName},
+        },
+        repository::user::UserRepository,
+    };
+
+    use crate::repository::user::UserRepositoryImpl;
 
     use super::*;
 
     #[sqlx::test]
-    #[ignore]
     async fn test_register_book(pool: sqlx::PgPool) -> Result<()> {
+        sqlx::query!(
+            r#"
+                INSERT INTO roles(name) VALUES ('Admin'), ('User');
+            "#,
+        )
+        .execute(&pool)
+        .await?;
+
+        let user_repo = UserRepositoryImpl::new(ConnectionPool::new(pool.clone()));
+
         let repo = BookRepositoryImpl::new(ConnectionPool::new(pool));
-        let book = CreateBook::new(
-            Title::try_from("test title".to_string())?,
-            Author::try_from("test author".to_string())?,
-            Isbn::try_from("test isbn".to_string())?,
-            Description::try_from("test description".to_string())?,
-        );
 
-        repo.create(book).await?;
+        let user = CreateUser {
+            name: UserName::try_from("test user".to_string())?,
+            email: "test@example.com".parse::<UserEmail>()?,
+            password: Password::try_from("password".to_string())?,
+        };
 
-        let res = repo.find_all().await?;
-        assert_eq!(res.len(), 1);
+        let user = user_repo.create(user).await?;
 
-        let book_id = &res[0].book_id;
+        let book = CreateBook {
+            title: Title::try_from("test title".to_string())?,
+            author: Author::try_from("test author".to_string())?,
+            isbn: Isbn::try_from("test isbn".to_string())?,
+            description: Description::try_from("test description".to_string())?,
+        };
 
+        repo.create(book, user.user_id().clone()).await?;
+
+        let options = BookListOptions {
+            limit: 10,
+            offset: 0,
+        };
+
+        let res = repo.find_all(options).await?;
+        assert_eq!(res.items.len(), 1);
+        assert_eq!(res.total, 1);
+        assert_eq!(res.limit, 10);
+        assert_eq!(res.offset, 0);
+
+        let book_id = &res.items[0].book_id;
         let res = repo.find_by_id(book_id).await?;
         assert!(res.is_some());
 
@@ -108,6 +246,7 @@ mod tests {
             author,
             isbn,
             description,
+            owner,
         } = res.ok_or(anyhow::anyhow!("book not found"))?;
 
         assert_eq!(book_id.inner_ref(), id.inner_ref());
@@ -115,6 +254,8 @@ mod tests {
         assert_eq!(author.inner_ref(), "test author");
         assert_eq!(isbn.inner_ref(), "test isbn");
         assert_eq!(description.inner_ref(), "test description");
+        assert_eq!(owner.user_id, *user.user_id());
+        assert_eq!(owner.user_name, "test user".to_string().try_into()?);
 
         Ok(())
     }

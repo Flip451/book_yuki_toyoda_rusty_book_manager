@@ -76,25 +76,13 @@ pub enum UserError {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct BookOwner(User);
-impl BookOwner {
-    pub fn user_id(&self) -> &UserId {
-        &self.0.user_id
-    }
-
-    pub fn user_name(&self) -> &UserName {
-        &self.0.user_name
-    }
+pub struct BookOwner {
+    pub user_id: UserId,
+    pub user_name: UserName,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CheckoutUser(User);
-impl CheckoutUser {
-    pub fn user_id(&self) -> &UserId {
-        &self.0.user_id
-    }
-
-    pub fn user_name(&self) -> &UserName {
-        &self.0.user_name
-    }
+pub struct CheckoutUser {
+    pub user_id: UserId,
+    pub user_name: UserName,
 }

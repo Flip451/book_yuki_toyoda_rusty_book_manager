@@ -36,6 +36,22 @@ impl From<UserRoleName> for UserRole {
     }
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BookOwner {
+    pub user_id: Uuid,
+    pub user_name: String,
+}
+
+impl From<kernel::model::user::BookOwner> for BookOwner {
+    fn from(value: kernel::model::user::BookOwner) -> Self {
+        Self {
+            user_id: value.user_id.into_inner(),
+            user_name: value.user_name.into_inner(),
+        }
+    }
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UsersResponse {
@@ -147,12 +163,12 @@ impl From<UpdateUserRoleRequestWithUserId> for UpdateUserRole {
 
 #[derive(Debug, thiserror::Error)]
 pub enum UserModelError {
-    #[error("Invalid name")]
+    #[error("Invalid name: {0}")]
     InvalidName(#[from] UserNameError),
 
-    #[error("Invalid current password")]
+    #[error("Invalid current password: {0}")]
     InvalidCurrentPassword(#[from] PasswordError),
 
-    #[error("Invalid email")]
+    #[error("Invalid email: {0}")]
     InvalidEmail(#[from] UserEmailError),
 }
