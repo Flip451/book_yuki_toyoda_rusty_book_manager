@@ -28,8 +28,11 @@ pub enum BookRepositoryError {
     #[error("unexpected error occurred: {0}")]
     Unexpected(#[source] Box<dyn std::error::Error + Send + Sync>),
 
-    #[error("book not found")]
-    NotFound,
+    #[error("book not found: {0}")]
+    NotFound(BookId),
+
+    #[error("no resource was affected: {0}")]
+    NoResourceAffected(String),
 }
 
 pub type BookRepositoryResult<T> = Result<T, BookRepositoryError>;

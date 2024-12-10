@@ -16,6 +16,7 @@ async-trait = "0.1.83"
 axum = { version = "0.7.8", features = ["macros"] }
 axum-extra = { version = "0.9.6", features = ["typed-header"] }
 bcrypt = "0.16.0"
+chrono = { version = "0.4.38", default-features = false, features = ["serde"] }
 derive-getters = "0.5.0"
 derive-new = "0.7.0"
 email_address = "0.2.9"

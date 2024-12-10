@@ -160,7 +160,9 @@ impl UserRepository for UserRepositoryImpl {
         .map_err(|e| UserRepositoryError::Unexpected(e.into()))?;
 
         if res.rows_affected() < 1 {
-            return Err(UserRepositoryError::NotFound);
+            return Err(UserRepositoryError::NoResourceAffected(
+                "No users record has been updated.".to_string(),
+            ));
         }
 
         Ok(())
@@ -178,7 +180,7 @@ impl UserRepository for UserRepositoryImpl {
         .map_err(|e| UserRepositoryError::Unexpected(e.into()))?;
 
         if res.rows_affected() < 1 {
-            return Err(UserRepositoryError::NotFound);
+            return Err(UserRepositoryError::NotFound(event.user_id.clone()));
         }
 
         Ok(())

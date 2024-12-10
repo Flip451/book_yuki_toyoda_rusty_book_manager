@@ -153,7 +153,9 @@ impl BookRepository for BookRepositoryImpl {
         .map_err(|e| BookRepositoryError::Unexpected(Box::new(e)))?;
 
         if res.rows_affected() < 1 {
-            return Err(BookRepositoryError::NotFound);
+            return Err(BookRepositoryError::NoResourceAffected(
+                "No books record has been updated.".to_string(),
+            ));
         }
 
         Ok(())
@@ -172,7 +174,9 @@ impl BookRepository for BookRepositoryImpl {
         .map_err(|e| BookRepositoryError::Unexpected(Box::new(e)))?;
 
         if res.rows_affected() < 1 {
-            return Err(BookRepositoryError::NotFound);
+            return Err(BookRepositoryError::NoResourceAffected(
+                "No books record has been deleted.".to_string(),
+            ));
         }
 
         Ok(())

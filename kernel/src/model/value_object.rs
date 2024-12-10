@@ -40,6 +40,12 @@ macro_rules! tuple_value_object_with_simple_error {
             }
         }
 
+        impl std::fmt::Display for $name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{}", self.0)
+            }
+        }
+
         #[derive(Debug, thiserror::Error)]
         pub enum $error {
             #[error("invalid {0}")]

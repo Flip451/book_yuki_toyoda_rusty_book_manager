@@ -24,11 +24,11 @@ pub enum UserRepositoryError {
     #[error("unexpected error occurred: {0}")]
     Unexpected(#[source] Box<dyn std::error::Error + Send + Sync>),
 
-    #[error("not found")]
-    NotFound,
+    #[error("not found: {0}")]
+    NotFound(UserId),
 
-    #[error("no resource was affected")]
-    NoResourceAffected,
+    #[error("no resource was affected: {0}")]
+    NoResourceAffected(String),
 
     #[error("transaction error: {0}")]
     Transaction(#[source] Box<dyn std::error::Error + Send + Sync>),
