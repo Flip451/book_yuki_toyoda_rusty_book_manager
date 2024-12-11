@@ -9,6 +9,7 @@ registry = { workspace = true }
 anyhow = { workspace = true }
 axum = { workspace = true }
 axum-extra = { workspace = true }
+chrono = { workspace = true }
 derive-getters = { workspace = true }
 derive-new = { workspace = true }
 garde = { workspace = true }

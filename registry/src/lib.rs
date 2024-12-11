@@ -4,12 +4,13 @@ use adapter::{
     database::ConnectionPool,
     redis::RedisClient,
     repository::{
-        auth::AuthRepositoryImpl, book::BookRepositoryImpl, health::HealthCheckRepositoryImpl,
-        user::UserRepositoryImpl,
+        auth::AuthRepositoryImpl, book::BookRepositoryImpl, checkout::CheckoutRepositoryImpl,
+        health::HealthCheckRepositoryImpl, user::UserRepositoryImpl,
     },
 };
 use kernel::repository::{
-    auth::AuthRepository, book::BookRepository, health::HealthCheckRepository, user::UserRepository,
+    auth::AuthRepository, book::BookRepository, checkout::CheckoutRepository,
+    health::HealthCheckRepository, user::UserRepository,
 };
 use shared::config::AppConfig;
 
@@ -17,6 +18,7 @@ use shared::config::AppConfig;
 pub struct AppRegistry {
     auth_repository: Arc<dyn AuthRepository>,
     book_repository: Arc<dyn BookRepository>,
+    checkout_repository: Arc<dyn CheckoutRepository>,
     health_check_repository: Arc<dyn HealthCheckRepository>,
     user_repository: Arc<dyn UserRepository>,
 }
@@ -34,12 +36,14 @@ impl AppRegistry {
             app_config.auth.ttl,
         ));
         let book_repository = Arc::new(BookRepositoryImpl::new(pool.clone()));
+        let checkout_repository = Arc::new(CheckoutRepositoryImpl::new(pool.clone()));
         let health_check_repository = Arc::new(HealthCheckRepositoryImpl::new(pool.clone()));
         let user_repository = Arc::new(UserRepositoryImpl::new(pool.clone()));
 
         Self {
             auth_repository,
             book_repository,
+            checkout_repository,
             health_check_repository,
             user_repository,
         }
@@ -53,6 +57,11 @@ impl AppRegistry {
     pub fn book_repository(&self) -> Arc<dyn BookRepository> {
         self.book_repository.clone()
     }
+
+    pub fn checkout_repository(&self) -> Arc<dyn CheckoutRepository> {
+        self.checkout_repository.clone()
+    }
+
     pub fn health_check_repository(&self) -> Arc<dyn HealthCheckRepository> {
         self.health_check_repository.clone()
     }

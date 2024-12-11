@@ -138,7 +138,7 @@ impl From<BookListQuery> for BookListOptions {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BookResponse {
-    pub book_id: Uuid,
+    pub id: Uuid,
     pub title: String,
     pub author: String,
     pub isbn: String,
@@ -151,7 +151,7 @@ impl From<Book> for BookResponse {
         let (book_id, title, author, isbn, description, owner) = book.dissolve();
 
         BookResponse {
-            book_id: book_id.into_inner(),
+            id: book_id.into_inner(),
             title: title.into_inner(),
             author: author.into_inner(),
             isbn: isbn.into_inner(),

@@ -7,16 +7,19 @@ use axum::{
 use garde::Validate;
 use kernel::{
     model::user::{event::DeleteUser, UserIdError},
-    repository::user::UserRepositoryError,
+    repository::{checkout::CheckoutRepositoryError, user::UserRepositoryError},
 };
 use registry::AppRegistry;
 use uuid::Uuid;
 
 use crate::{
     extractor::AuthorizedUser,
-    model::user::{
-        CreateUserRequest, UpdateUserPasswordRequest, UpdateUserPasswordRequestWithUserId,
-        UpdateUserRoleRequest, UpdateUserRoleRequestWithUserId, UserModelError, UserResponse,
+    model::{
+        checkout::CheckoutsResponse,
+        user::{
+            CreateUserRequest, UpdateUserPasswordRequest, UpdateUserPasswordRequestWithUserId,
+            UpdateUserRoleRequest, UpdateUserRoleRequestWithUserId, UserModelError, UserResponse,
+        },
     },
 };
 
@@ -122,6 +125,17 @@ pub(crate) async fn change_password(
     Ok(StatusCode::NO_CONTENT)
 }
 
+pub(crate) async fn get_checkouts(
+    user: AuthorizedUser,
+    State(registry): State<AppRegistry>,
+) -> Result<Json<CheckoutsResponse>, UserHandlerError> {
+    let checkouts = registry
+        .checkout_repository()
+        .find_unreturned_by_user_id(user.user_id())
+        .await?;
+    Ok(Json(checkouts.into()))
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum UserHandlerError {
     #[error("forbidden")]
@@ -137,7 +151,10 @@ pub enum UserHandlerError {
     ModelError(#[from] UserModelError),
 
     #[error("repository error: {0}")]
-    RepositoryError(#[from] UserRepositoryError),
+    UserRepositoryError(#[from] UserRepositoryError),
+
+    #[error("checkout repository error: {0}")]
+    CheckoutRepositoryError(#[from] CheckoutRepositoryError),
 }
 
 impl IntoResponse for UserHandlerError {
@@ -147,7 +164,15 @@ impl IntoResponse for UserHandlerError {
             UserHandlerError::InvalidUserId(_) => StatusCode::BAD_REQUEST,
             UserHandlerError::ValidationError(_) => StatusCode::BAD_REQUEST,
             UserHandlerError::ModelError(_) => StatusCode::BAD_REQUEST,
-            UserHandlerError::RepositoryError(e) => {
+            UserHandlerError::UserRepositoryError(e) => {
+                tracing::error!(
+                    error.cause_chain = ?e,
+                    error.message = %e,
+                    "unexpected error happened"
+                );
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+            UserHandlerError::CheckoutRepositoryError(e) => {
                 tracing::error!(
                     error.cause_chain = ?e,
                     error.message = %e,

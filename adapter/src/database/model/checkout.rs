@@ -41,18 +41,18 @@ impl TryFrom<CheckoutRow> for Checkout {
             isbn,
         } = value;
 
-        Ok(Checkout {
-            checkout_id: checkout_id.try_into()?,
-            checked_out_by: user_id.try_into()?,
+        Ok(Checkout::new(
+            checkout_id.try_into()?,
+            user_id.try_into()?,
             checked_out_at,
-            returned_at: None,
-            book: CheckoutBook {
-                book_id: book_id.try_into()?,
-                title: title.try_into()?,
-                author: author.try_into()?,
-                isbn: isbn.try_into()?,
-            },
-        })
+            None,
+            CheckoutBook::new(
+                book_id.try_into()?,
+                title.try_into()?,
+                author.try_into()?,
+                isbn.try_into()?,
+            ),
+        ))
     }
 }
 
@@ -103,18 +103,18 @@ impl TryFrom<ReturnedCheckoutRow> for Checkout {
             isbn,
         } = value;
 
-        Ok(Checkout {
-            checkout_id: checkout_id.try_into()?,
-            checked_out_by: user_id.try_into()?,
+        Ok(Checkout::new(
+            checkout_id.try_into()?,
+            user_id.try_into()?,
             checked_out_at,
-            returned_at: Some(returned_at),
-            book: CheckoutBook {
-                book_id: book_id.try_into()?,
-                title: title.try_into()?,
-                author: author.try_into()?,
-                isbn: isbn.try_into()?,
-            },
-        })
+            Some(returned_at),
+            CheckoutBook::new(
+                book_id.try_into()?,
+                title.try_into()?,
+                author.try_into()?,
+                isbn.try_into()?,
+            ),
+        ))
     }
 }
 
