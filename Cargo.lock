@@ -1199,6 +1199,7 @@ dependencies = [
  "derive-getters",
  "derive-new",
  "email_address",
+ "mockall",
  "thiserror 2.0.3",
  "uuid",
 ]

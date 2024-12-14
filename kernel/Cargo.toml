@@ -10,6 +10,7 @@ chrono ={ workspace = true }
 derive-getters = { workspace = true }
 derive-new = { workspace = true }
 email_address = { workspace = true }
+mockall = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true }
 

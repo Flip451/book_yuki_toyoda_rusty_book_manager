@@ -10,6 +10,7 @@ use crate::model::{
     user::UserId,
 };
 
+#[mockall::automock]
 #[async_trait]
 pub trait BookRepository: Send + Sync {
     async fn create(&self, event: CreateBook, owner_id: UserId) -> BookRepositoryResult<()>;
