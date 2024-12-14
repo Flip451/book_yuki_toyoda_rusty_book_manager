@@ -95,6 +95,9 @@ impl IntoResponse for AuthorizedUserError {
             Self::Unauthorized => StatusCode::FORBIDDEN,
             Self::Unauthenticated => StatusCode::UNAUTHORIZED,
             Self::InvalidAccessToken(_) => StatusCode::UNAUTHORIZED,
+            Self::AuthRepositoryError(AuthRepositoryError::InvalidPassword) => {
+                StatusCode::UNAUTHORIZED
+            }
             e @ (Self::AuthRepositoryError(_) | Self::UserRepositoryError(_)) => {
                 tracing::error!(
                     error.cause_chain = ?e,

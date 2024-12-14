@@ -1,3 +1,5 @@
+use chrono::DateTime;
+use chrono::Utc;
 use derive_getters::Dissolve;
 use thiserror::Error;
 use uuid::Uuid;
@@ -7,7 +9,9 @@ pub mod event;
 use crate::impl_entity;
 use crate::tuple_value_object_with_simple_error;
 
+use super::checkout::CheckoutId;
 use super::user::BookOwner;
+use super::user::CheckoutUser;
 
 tuple_value_object_with_simple_error!(BookId, Uuid, BookIdError);
 tuple_value_object_with_simple_error!(Title, String, TitleError);
@@ -24,6 +28,7 @@ pub struct Book {
     isbn: Isbn,
     description: Description,
     owner: BookOwner,
+    checkout: Option<Checkout>,
 }
 
 #[cfg(feature = "test-utils")]
@@ -35,9 +40,17 @@ pub struct Book {
     pub isbn: Isbn,
     pub description: Description,
     pub owner: BookOwner,
+    pub checkout: Option<Checkout>,
 }
 
 impl_entity!(Book, book_id, BookId);
+
+#[derive(Debug, Dissolve)]
+pub struct Checkout {
+    pub checkout_id: CheckoutId,
+    pub checked_out_by: CheckoutUser,
+    pub checked_out_at: DateTime<Utc>,
+}
 
 #[derive(Debug, Error)]
 pub enum BookError {

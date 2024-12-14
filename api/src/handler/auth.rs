@@ -55,8 +55,8 @@ pub(crate) async fn logout(
 
 #[derive(Debug, Error)]
 pub enum AuthHandlerError {
-    #[error("repository error: {0}")]
-    RepositoryError(#[from] AuthRepositoryError),
+    #[error("auth repository error: {0}")]
+    AuthRepositoryError(#[from] AuthRepositoryError),
 
     #[error("invalid email: {0}")]
     InvalidEmail(#[from] UserEmailError),
@@ -70,7 +70,10 @@ impl IntoResponse for AuthHandlerError {
         let status_code = match self {
             AuthHandlerError::InvalidEmail(_email_error) => StatusCode::BAD_REQUEST,
             AuthHandlerError::InvalidPassword(_password_error) => StatusCode::BAD_REQUEST,
-            AuthHandlerError::RepositoryError(_) => {
+            AuthHandlerError::AuthRepositoryError(AuthRepositoryError::InvalidPassword) => {
+                StatusCode::UNAUTHORIZED
+            }
+            AuthHandlerError::AuthRepositoryError(_) => {
                 tracing::error!(
                     error.cause_chain = ?self,
                     error.message = %self,

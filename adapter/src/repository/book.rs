@@ -1,7 +1,9 @@
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use derive_new::new;
 use kernel::model::book::event::{DeleteBook, UpdateBook};
-use kernel::model::book::BookListOptions;
+use kernel::model::book::{BookIdError, BookListOptions, Checkout};
 use kernel::model::list::PaginatedList;
 use kernel::model::user::UserId;
 use kernel::model::value_object::ValueObject;
@@ -11,7 +13,9 @@ use kernel::{
     repository::book::BookRepository,
 };
 
-use crate::database::model::book::{BookRow, BookRowError, PagenatedBookRow};
+use crate::database::model::book::{
+    BookCheckoutRow, BookCheckoutRowError, BookRow, BookRowError, PagenatedBookRow,
+};
 use crate::database::ConnectionPool;
 
 #[derive(new)]
@@ -88,9 +92,22 @@ impl BookRepository for BookRepositoryImpl {
         .await
         .map_err(|e| BookRepositoryError::Unexpected(e.into()))?;
 
+        let book_ids = rows
+            .iter()
+            .map(|book| {
+                book.book_id
+                    .try_into()
+                    .map_err(|e: BookIdError| BookRepositoryError::InvalidSavedEntity(e.into()))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        let mut checkouts = self.find_checkouts(&book_ids).await?;
+
         let items = rows
             .into_iter()
-            .map(Book::try_from)
+            .map(|row| {
+                let checkout = checkouts.remove(&row.book_id.try_into()?);
+                row.try_into_book(checkout)
+            })
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e: BookRowError| BookRepositoryError::InvalidSavedEntity(e.into()))?;
 
@@ -124,9 +141,27 @@ impl BookRepository for BookRepositoryImpl {
         .await
         .map_err(|e| BookRepositoryError::Unexpected(Box::new(e)))?;
 
-        row.map(|row| row.try_into())
-            .transpose()
-            .map_err(|e: BookRowError| BookRepositoryError::InvalidSavedEntity(e.into()))
+        // row.map(|row| row.try_into())
+        //     .transpose()
+        //     .map_err(|e: BookRowError| BookRepositoryError::InvalidSavedEntity(e.into()))
+
+        match row {
+            Some(r) => {
+                let book_id: BookId = r
+                    .book_id
+                    .try_into()
+                    .map_err(|e: BookIdError| BookRepositoryError::InvalidSavedEntity(e.into()))?;
+                let checkout = self
+                    .find_checkouts(&[book_id.clone()])
+                    .await?
+                    .remove(&book_id);
+                let book = r
+                    .try_into_book(checkout)
+                    .map_err(|e: BookRowError| BookRepositoryError::InvalidSavedEntity(e.into()))?;
+                Ok(Some(book))
+            }
+            None => Ok(None),
+        }
     }
 
     async fn update(&self, event: UpdateBook) -> BookRepositoryResult<()> {
@@ -180,6 +215,49 @@ impl BookRepository for BookRepositoryImpl {
         }
 
         Ok(())
+    }
+}
+
+impl BookRepositoryImpl {
+    async fn find_checkouts(
+        &self,
+        book_ids: &[BookId],
+    ) -> BookRepositoryResult<HashMap<BookId, Checkout>> {
+        let book_ids = book_ids.iter().map(|b| *b.inner_ref()).collect::<Vec<_>>();
+
+        let res = sqlx::query_as!(
+            BookCheckoutRow,
+            r#"
+                SELECT
+                    checkout_id,
+                    book_id,
+                    user_id,
+                    u.name AS user_name,
+                    checked_out_at
+                FROM checkouts
+                INNER JOIN users u USING(user_id)
+                WHERE book_id IN (SELECT * FROM UNNEST($1::uuid[]))
+            "#,
+            &book_ids[..],
+        )
+        .fetch_all(self.db.inner_ref())
+        .await
+        .map_err(|e| BookRepositoryError::Unexpected(Box::new(e)))?;
+
+        let map =
+            res.into_iter()
+                .map(|r| {
+                    let book_id = r.book_id.try_into().map_err(|e: BookIdError| {
+                        BookRepositoryError::InvalidSavedEntity(e.into())
+                    })?;
+                    let checkout = r.try_into().map_err(|e: BookCheckoutRowError| {
+                        BookRepositoryError::InvalidSavedEntity(e.into())
+                    })?;
+                    Ok((book_id, checkout))
+                })
+                .collect::<Result<HashMap<_, _>, _>>()?;
+
+        Ok(map)
     }
 }
 
@@ -251,6 +329,7 @@ mod tests {
             isbn,
             description,
             owner,
+            ..
         } = res.ok_or(anyhow::anyhow!("book not found"))?;
 
         assert_eq!(book_id.inner_ref(), id.inner_ref());

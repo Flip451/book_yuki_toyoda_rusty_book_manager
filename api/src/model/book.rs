@@ -1,13 +1,14 @@
+use chrono::{DateTime, Utc};
 use derive_new::new;
 use garde::Validate;
 use kernel::model::{
     book::{
         event::{CreateBook, UpdateBook},
-        Author, AuthorError, Book, BookId, BookListOptions, Description, DescriptionError, Isbn,
-        IsbnError, Title, TitleError,
+        Author, AuthorError, Book, BookId, BookListOptions, Checkout, Description,
+        DescriptionError, Isbn, IsbnError, Title, TitleError,
     },
     list::PaginatedList,
-    user::UserId,
+    user::{CheckoutUser, UserId},
     value_object::ValueObject,
 };
 use serde::{Deserialize, Serialize};
@@ -144,11 +145,12 @@ pub struct BookResponse {
     pub isbn: String,
     pub description: String,
     pub owner: BookOwner,
+    pub checkout: Option<BookCheckoutResponse>,
 }
 
 impl From<Book> for BookResponse {
     fn from(book: Book) -> Self {
-        let (book_id, title, author, isbn, description, owner) = book.dissolve();
+        let (book_id, title, author, isbn, description, owner, checkout) = book.dissolve();
 
         BookResponse {
             id: book_id.into_inner(),
@@ -157,6 +159,7 @@ impl From<Book> for BookResponse {
             isbn: isbn.into_inner(),
             description: description.into_inner(),
             owner: owner.into(),
+            checkout: checkout.map(BookCheckoutResponse::from),
         }
     }
 }
@@ -184,6 +187,44 @@ impl From<PaginatedList<Book>> for PaginatedBookResponse {
             limit,
             offset,
             items: items.into_iter().map(BookResponse::from).collect(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BookCheckoutResponse {
+    pub id: Uuid,
+    pub checked_out_by: CheckoutUserResponse,
+    pub checked_out_at: DateTime<Utc>,
+}
+
+impl From<Checkout> for BookCheckoutResponse {
+    fn from(checkout: Checkout) -> Self {
+        let (checkout_id, checkout_user, checked_out_at) = checkout.dissolve();
+
+        BookCheckoutResponse {
+            id: checkout_id.into_inner(),
+            checked_out_by: checkout_user.into(),
+            checked_out_at,
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CheckoutUserResponse {
+    pub id: Uuid,
+    pub name: String,
+}
+
+impl From<CheckoutUser> for CheckoutUserResponse {
+    fn from(checkout_user: CheckoutUser) -> Self {
+        let CheckoutUser { user_id, user_name } = checkout_user;
+
+        CheckoutUserResponse {
+            id: user_id.into_inner(),
+            name: user_name.into_inner(),
         }
     }
 }

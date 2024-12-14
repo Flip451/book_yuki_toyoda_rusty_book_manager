@@ -1,7 +1,9 @@
 use kernel::model::{
-    book::{AuthorError, Book, BookIdError, DescriptionError, IsbnError, TitleError},
-    user::{BookOwner, UserIdError, UserNameError},
+    book::{AuthorError, Book, BookIdError, Checkout, DescriptionError, IsbnError, TitleError},
+    checkout::CheckoutIdError,
+    user::{BookOwner, CheckoutUser, UserIdError, UserNameError},
 };
+use sqlx::types::chrono::{DateTime, Utc};
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -39,11 +41,9 @@ pub enum BookRowError {
     InvalidBookOwnerName(#[from] UserNameError),
 }
 
-impl TryFrom<BookRow> for Book {
-    type Error = BookRowError;
-
-    fn try_from(
-        BookRow {
+impl BookRow {
+    pub fn try_into_book(self, checkout: Option<Checkout>) -> Result<Book, BookRowError> {
+        let BookRow {
             book_id,
             title,
             author,
@@ -51,8 +51,8 @@ impl TryFrom<BookRow> for Book {
             description,
             owner_id,
             owner_name,
-        }: BookRow,
-    ) -> Result<Self, Self::Error> {
+        } = self;
+
         let book_owner = BookOwner {
             user_id: owner_id.try_into()?,
             user_name: owner_name.try_into()?,
@@ -65,6 +65,7 @@ impl TryFrom<BookRow> for Book {
             isbn.try_into()?,
             description.try_into()?,
             book_owner,
+            checkout,
         ))
     }
 }
@@ -72,4 +73,47 @@ impl TryFrom<BookRow> for Book {
 pub struct PagenatedBookRow {
     pub total: i64,
     pub book_id: Uuid,
+}
+
+pub struct BookCheckoutRow {
+    pub checkout_id: Uuid,
+    pub book_id: Uuid,
+    pub user_id: Uuid,
+    pub user_name: String,
+    pub checked_out_at: DateTime<Utc>,
+}
+
+impl TryFrom<BookCheckoutRow> for Checkout {
+    type Error = BookCheckoutRowError;
+
+    fn try_from(
+        BookCheckoutRow {
+            checkout_id,
+            book_id: _,
+            user_id,
+            user_name,
+            checked_out_at,
+        }: BookCheckoutRow,
+    ) -> Result<Self, Self::Error> {
+        Ok(Checkout {
+            checkout_id: checkout_id.try_into()?,
+            checked_out_by: CheckoutUser {
+                user_id: user_id.try_into()?,
+                user_name: user_name.try_into()?,
+            },
+            checked_out_at,
+        })
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum BookCheckoutRowError {
+    #[error("saved book checkout id is invalid: {0}")]
+    InvalidBookCheckoutId(#[from] CheckoutIdError),
+
+    #[error("saved book checkout user id is invalid: {0}")]
+    InvalidBookCheckoutUserId(#[from] UserIdError),
+
+    #[error("saved book checkout user name is invalid: {0}")]
+    InvalidBookCheckoutUserName(#[from] UserNameError),
 }
