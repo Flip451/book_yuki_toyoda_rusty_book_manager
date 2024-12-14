@@ -141,10 +141,6 @@ impl BookRepository for BookRepositoryImpl {
         .await
         .map_err(|e| BookRepositoryError::Unexpected(Box::new(e)))?;
 
-        // row.map(|row| row.try_into())
-        //     .transpose()
-        //     .map_err(|e: BookRowError| BookRepositoryError::InvalidSavedEntity(e.into()))
-
         match row {
             Some(r) => {
                 let book_id: BookId = r
@@ -271,21 +267,14 @@ mod tests {
         },
         repository::user::UserRepository,
     };
+    use uuid::Uuid;
 
     use crate::repository::user::UserRepositoryImpl;
 
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(fixtures("common"))]
     async fn test_register_book(pool: sqlx::PgPool) -> Result<()> {
-        sqlx::query!(
-            r#"
-                INSERT INTO roles(name) VALUES ('Admin'), ('User');
-            "#,
-        )
-        .execute(&pool)
-        .await?;
-
         let user_repo = UserRepositoryImpl::new(ConnectionPool::new(pool.clone()));
 
         let repo = BookRepositoryImpl::new(ConnectionPool::new(pool));
@@ -339,6 +328,52 @@ mod tests {
         assert_eq!(description.inner_ref(), "test description");
         assert_eq!(owner.user_id, *user.user_id());
         assert_eq!(owner.user_name, "test user".to_string().try_into()?);
+
+        Ok(())
+    }
+
+    #[sqlx::test(fixtures("common", "book"))]
+    async fn test_update_book(pool: sqlx::PgPool) -> Result<()> {
+        let repo = BookRepositoryImpl::new(ConnectionPool::new(pool.clone()));
+
+        let book_id = BookId::try_from("9890736e-a4e4-461a-a77d-eac3517ef11b".parse::<Uuid>()?)?;
+
+        let book = repo.find_by_id(&book_id).await?;
+        assert!(book.is_some());
+
+        const NEW_DESCRIPTION: &str = "更新後の説明";
+
+        let Book {
+            book_id,
+            title,
+            author,
+            isbn,
+            description,
+            ..
+        } = book.ok_or(anyhow::anyhow!("book not found"))?;
+
+        assert_ne!(description.inner_ref(), NEW_DESCRIPTION);
+
+        let event = UpdateBook {
+            book_id: book_id.clone(),
+            title,
+            author,
+            isbn,
+            description: NEW_DESCRIPTION.to_string().try_into()?,
+            requested_by: UserId::try_from(
+                "5b4c96ac-316a-4bee-8e69-cac5eb84ff4c".parse::<Uuid>()?,
+            )?,
+        };
+
+        repo.update(event).await?;
+
+        let book = repo.find_by_id(&book_id).await?;
+        assert_eq!(
+            book.ok_or(anyhow::anyhow!("book not found"))?
+                .description
+                .inner_ref(),
+            NEW_DESCRIPTION
+        );
 
         Ok(())
     }
