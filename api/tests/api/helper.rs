@@ -68,8 +68,8 @@ pub fn fixture(mut fixture_auth: MockAppRegistryExt) -> MockAppRegistryExt {
 
 pub trait TestRequestExt {
     fn bearer(self) -> Builder;
-    #[allow(dead_code)]
 
+    #[allow(dead_code)]
     fn application_json(self) -> Builder;
 }
 
