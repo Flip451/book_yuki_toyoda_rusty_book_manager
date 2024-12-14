@@ -1,5 +1,5 @@
 use adapter::{database::connect_database_with, redis::RedisClient};
-use axum::Router;
+use axum::{http::Method, Router};
 use registry::AppRegistry;
 use shared::{config::AppConfig, env::Environment};
 use std::{
@@ -7,6 +7,7 @@ use std::{
     sync::Arc,
 };
 use tower_http::{
+    cors::{self, CorsLayer},
     trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     LatencyUnit,
 };
@@ -49,6 +50,7 @@ async fn bootstrap() -> Result<()> {
                         .latency_unit(LatencyUnit::Millis),
                 ),
         )
+        .layer(cors())
         .with_state(registry);
 
     // TCP リスナーの設定
@@ -92,4 +94,11 @@ fn init_logger() -> Result<()> {
         .try_init()?;
 
     Ok(())
+}
+
+fn cors() -> CorsLayer {
+    CorsLayer::new()
+        .allow_headers(cors::Any)
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+        .allow_origin(cors::Any)
 }
