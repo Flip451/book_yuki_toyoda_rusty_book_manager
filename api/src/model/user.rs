@@ -39,15 +39,15 @@ impl From<UserRoleName> for UserRole {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BookOwner {
-    pub user_id: Uuid,
-    pub user_name: String,
+    pub id: Uuid,
+    pub name: String,
 }
 
 impl From<kernel::model::user::BookOwner> for BookOwner {
     fn from(value: kernel::model::user::BookOwner) -> Self {
         Self {
-            user_id: value.user_id.into_inner(),
-            user_name: value.user_name.into_inner(),
+            id: value.user_id.into_inner(),
+            name: value.user_name.into_inner(),
         }
     }
 }
@@ -56,6 +56,14 @@ impl From<kernel::model::user::BookOwner> for BookOwner {
 #[serde(rename_all = "camelCase")]
 pub struct UsersResponse {
     pub items: Vec<UserResponse>,
+}
+
+impl From<Vec<User>> for UsersResponse {
+    fn from(value: Vec<User>) -> Self {
+        Self {
+            items: value.into_iter().map(UserResponse::from).collect(),
+        }
+    }
 }
 
 #[derive(Serialize)]

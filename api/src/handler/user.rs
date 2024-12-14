@@ -19,6 +19,7 @@ use crate::{
         user::{
             CreateUserRequest, UpdateUserPasswordRequest, UpdateUserPasswordRequestWithUserId,
             UpdateUserRoleRequest, UpdateUserRoleRequestWithUserId, UserModelError, UserResponse,
+            UsersResponse,
         },
     },
 };
@@ -45,16 +46,8 @@ pub(crate) async fn register_user(
 pub(crate) async fn list_users(
     _user: AuthorizedUser,
     State(registry): State<AppRegistry>,
-) -> Result<Json<Vec<UserResponse>>, UserHandlerError> {
-    Ok(Json(
-        registry
-            .user_repository()
-            .find_all()
-            .await?
-            .into_iter()
-            .map(UserResponse::from)
-            .collect(),
-    ))
+) -> Result<Json<UsersResponse>, UserHandlerError> {
+    Ok(Json(registry.user_repository().find_all().await?.into()))
 }
 
 // 管理者がユーザーを削除する
