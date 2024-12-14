@@ -15,7 +15,7 @@ use kernel::repository::{
 use shared::config::AppConfig;
 
 #[derive(Clone)]
-pub struct AppRegistry {
+pub struct AppRegistryImpl {
     auth_repository: Arc<dyn AuthRepository>,
     book_repository: Arc<dyn BookRepository>,
     checkout_repository: Arc<dyn CheckoutRepository>,
@@ -23,7 +23,7 @@ pub struct AppRegistry {
     user_repository: Arc<dyn UserRepository>,
 }
 
-impl AppRegistry {
+impl AppRegistryImpl {
     pub fn new(
         pool: ConnectionPool,
         redis_client: Arc<RedisClient>,
@@ -48,25 +48,38 @@ impl AppRegistry {
             user_repository,
         }
     }
+}
 
+#[mockall::automock]
+pub trait AppRegistryExt {
+    fn auth_repository(&self) -> Arc<dyn AuthRepository>;
+    fn book_repository(&self) -> Arc<dyn BookRepository>;
+    fn checkout_repository(&self) -> Arc<dyn CheckoutRepository>;
+    fn health_check_repository(&self) -> Arc<dyn HealthCheckRepository>;
+    fn user_repository(&self) -> Arc<dyn UserRepository>;
+}
+
+impl AppRegistryExt for AppRegistryImpl {
     // 依存解決したインスタンスを返すメソッド
-    pub fn auth_repository(&self) -> Arc<dyn AuthRepository> {
+    fn auth_repository(&self) -> Arc<dyn AuthRepository> {
         self.auth_repository.clone()
     }
 
-    pub fn book_repository(&self) -> Arc<dyn BookRepository> {
+    fn book_repository(&self) -> Arc<dyn BookRepository> {
         self.book_repository.clone()
     }
 
-    pub fn checkout_repository(&self) -> Arc<dyn CheckoutRepository> {
+    fn checkout_repository(&self) -> Arc<dyn CheckoutRepository> {
         self.checkout_repository.clone()
     }
 
-    pub fn health_check_repository(&self) -> Arc<dyn HealthCheckRepository> {
+    fn health_check_repository(&self) -> Arc<dyn HealthCheckRepository> {
         self.health_check_repository.clone()
     }
 
-    pub fn user_repository(&self) -> Arc<dyn UserRepository> {
+    fn user_repository(&self) -> Arc<dyn UserRepository> {
         self.user_repository.clone()
     }
 }
+
+pub type AppRegistry = Arc<dyn AppRegistryExt + Send + Sync + 'static>;

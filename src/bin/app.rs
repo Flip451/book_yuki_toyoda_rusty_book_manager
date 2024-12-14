@@ -1,6 +1,6 @@
 use adapter::{database::connect_database_with, redis::RedisClient};
 use axum::{http::Method, Router};
-use registry::AppRegistry;
+use registry::AppRegistryImpl;
 use shared::{config::AppConfig, env::Environment};
 use std::{
     net::{Ipv4Addr, SocketAddr},
@@ -34,7 +34,7 @@ async fn bootstrap() -> Result<()> {
     let kvs = Arc::new(RedisClient::new(&app_config.redis)?);
 
     // 依存解決
-    let registry = AppRegistry::new(pool, kvs, app_config);
+    let registry = Arc::new(AppRegistryImpl::new(pool, kvs, app_config));
 
     // ルーティングの設定
     let app = Router::new()

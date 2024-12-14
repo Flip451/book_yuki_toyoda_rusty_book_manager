@@ -8,3 +8,5 @@ shared = { workspace = true }
 
 adapter = { workspace = true }
 kernel = { workspace = true }
+
+mockall = { workspace = true}
