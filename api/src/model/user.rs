@@ -36,7 +36,7 @@ impl From<UserRoleName> for UserRole {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BookOwner {
     pub id: Uuid,
