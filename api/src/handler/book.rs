@@ -52,11 +52,19 @@ pub(crate) async fn show_book_list(
         .map_err(BookHandlerError::from)
 }
 
+#[tracing::instrument(
+    skip(_user, registry),
+    fields(
+        user_id = %_user.user_id(),
+    )
+)]
 pub(crate) async fn show_book(
     _user: AuthorizedUser,
     State(registry): State<AppRegistry>,
     Path(book_id): Path<Uuid>,
 ) -> Result<Json<BookResponse>, BookHandlerError> {
+    tracing::info!("show book called");
+
     let res = registry
         .book_repository()
         .find_by_id(&book_id.try_into()?)
